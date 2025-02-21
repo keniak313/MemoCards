@@ -1,0 +1,36 @@
+#game{
+    position: relative;
+}
+
+#main{
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.cards{
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: .5rem;
+
+}
+
+#popup{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: absolute;
+    background-color: rgba(0,0,0,0.8);
+    z-index: 200;
+    min-width: 100vw;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.hidden{
+    display: none !important;
+}

@@ -75,8 +75,7 @@ export default function Game() {
   function gameHandler(item, index) {
     if (item.isChecked) {
       //Game OVer
-      setShowPopup(true);
-      updateBestScore();
+      popupHandler();
     } else {
       //Next round
       setCards((draft) => {
@@ -95,23 +94,21 @@ export default function Game() {
     });
   }
 
-  function updateBestScore(){
+  const popupHandler = useCallback(() => {
     if (score > bestScore) {
       setBestScore(score);
     }
-  }
+    setShowPopup(true);
+  }, [score, bestScore]);
 
- const checkWin = () => {
-    console.log(`Cards Amount: ${cardsAmount}, Score: ${score}`);
-    if(score === cardsAmount){
-      console.log("Win")
+  const checkWin = useCallback(() => {
+    if (score === cardsAmount) {
       setIsWin(true);
-      setShowPopup(true);
-      updateBestScore();
+      popupHandler();
     }
-  }
+  }, [score, popupHandler]);
 
-  useEffect(() => checkWin(), [score]);
+  useEffect(() => checkWin(), [checkWin]);
 
   const shuffleArray = (array) => {
     for (let i = array.length - 1; i > 0; i--) {

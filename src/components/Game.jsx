@@ -7,35 +7,41 @@ import Popup from "./Popup";
 import styles from "../styles/game.module.css";
 
 export default function Game() {
-  const cardsAmount = 10;
+  const cardsAmount = 3;
   const [score, setScore] = useState(0);
   const [bestScore, setBestScore] = useState(score);
   const [isLoading, setIsLoading] = useState(false);
 
   const [cards, setCards] = useImmer([]);
   const [showPopup, setShowPopup] = useState(false);
+  const [isWin, setIsWin] = useState(false);
 
-  const fetchPokemons = useCallback(async (data) => {
-    console.log(data);
-    await data.results.forEach((p) => {
-      fetch(p.url)
-        .then((response) => response.json())
-        .then((pokemon) => {
-          const name = pokemon.name;
-          const img =
-            pokemon.sprites.versions[`generation-v`][`black-white`].animated
-              .front_default;
-          setCards((draft) => {
-            draft.push({
-              name: name,
-              image: img,
-              id: uuidv4(),
-              isChecked: false,
+  const refs = useRef({});
+
+  const fetchPokemons = useCallback(
+    async (data) => {
+      console.log(data);
+      await data.results.forEach((p) => {
+        fetch(p.url)
+          .then((response) => response.json())
+          .then((pokemon) => {
+            const name = pokemon.name;
+            const img =
+              pokemon.sprites.versions[`generation-v`][`black-white`].animated
+                .front_default;
+            setCards((draft) => {
+              draft.push({
+                name: name,
+                image: img,
+                id: uuidv4(),
+                isChecked: false,
+              });
             });
           });
-        });
-    });
-  }, [setCards])
+      });
+    },
+    [setCards]
+  );
 
   useEffect(() => {
     let ignore = false;
@@ -66,13 +72,46 @@ export default function Game() {
     };
   }, [fetchPokemons]);
 
-  function randomizeCards() {
+  function gameHandler(item, index) {
+    if (item.isChecked) {
+      //Game OVer
+      setShowPopup(true);
+      updateBestScore();
+    } else {
+      //Next round
+      setCards((draft) => {
+        draft[index].isChecked = true;
+      });
+      nextRound();
+    }
+    refs[item.name].current.blur();
+  }
+
+  function nextRound() {
+    setScore((score) => score + 1);
     setCards((draft) => {
       //draft.sort(() => 0.5 - Math.random());
       shuffleArray(draft);
     });
-    setScore((score) => score + 1);
   }
+
+  function updateBestScore(){
+    if (score > bestScore) {
+      setBestScore(score);
+    }
+  }
+
+ const checkWin = () => {
+    console.log(`Cards Amount: ${cardsAmount}, Score: ${score}`);
+    if(score === cardsAmount){
+      console.log("Win")
+      setIsWin(true);
+      setShowPopup(true);
+      updateBestScore();
+    }
+  }
+
+  useEffect(() => checkWin(), [score]);
 
   const shuffleArray = (array) => {
     for (let i = array.length - 1; i > 0; i--) {
@@ -84,7 +123,7 @@ export default function Game() {
   };
 
   function restartGame() {
-    randomizeCards();
+    nextRound();
     setScore(0);
     setCards((draft) => {
       draft.forEach((d) => {
@@ -92,26 +131,10 @@ export default function Game() {
       });
     });
     setShowPopup(false);
+    setIsWin(false);
   }
 
-  const refs = useRef({});
-
-  function gameHandler(item, index) {
-    if (item.isChecked) {
-      if (score > bestScore) {
-        setBestScore(score);
-      }
-      setShowPopup(true);
-    } else {
-      setCards((draft) => {
-        draft[index].isChecked = true;
-      });
-      randomizeCards();
-    }
-    refs[item.name].current.blur();
-  }
-
-  const timer = (ms) => new Promise((res) => setTimeout(res, ms));
+  //const timer = (ms) => new Promise((res) => setTimeout(res, ms));
 
   return (
     <section id={styles.game}>
@@ -119,6 +142,7 @@ export default function Game() {
         onClick={() => restartGame()}
         score={score}
         isVisible={showPopup}
+        isWin={isWin}
       />
       <section id={styles.main}>
         <div>

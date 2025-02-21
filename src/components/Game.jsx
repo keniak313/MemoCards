@@ -16,11 +16,13 @@ export default function Game() {
   const [cards, setCards] = useImmer([]);
   const [showPopup, setShowPopup] = useState(false);
   const [isWin, setIsWin] = useState(false);
+  const [newGame, setNewGame] = useState(true);
 
   const refs = useRef({});
 
   const fetchPokemons = useCallback(
     async (data) => {
+      console.log("FETCH pokemons");
       console.log(data);
       await data.results.forEach((p) => {
         fetch(p.url)
@@ -40,22 +42,27 @@ export default function Game() {
             });
           });
       });
+      setNewGame(false);
     },
     [setCards]
   );
 
   useEffect(() => {
+    console.log("FETCH pokemon URL");
     let ignore = false;
     setIsLoading(true);
     async function fetchData() {
       try {
         const response = await fetch(
-          `https://pokeapi.co/api/v2/pokemon?limit=${cardsAmount}`
+          `https://pokeapi.co/api/v2/pokemon?limit=${cardsAmount}&offset=${
+            Math.random() * 100
+          }`
         );
-        if (!ignore) {
+        if (!ignore && newGame) {
           if (response.ok) {
             const json = await response.json();
-            fetchPokemons(json);
+            console.log(json);
+            await fetchPokemons(json);
             setIsLoading(false);
           } else {
             throw new Error(response.status);
@@ -71,7 +78,7 @@ export default function Game() {
     return () => {
       ignore = true;
     };
-  }, [fetchPokemons]);
+  }, [fetchPokemons, newGame]);
 
   function gameHandler(item, index) {
     if (item.isChecked) {
@@ -113,12 +120,15 @@ export default function Game() {
   };
 
   function restartGame() {
+    setNewGame(true);
     score.current = 0;
-    setCards((draft) => {
-      draft.forEach((d) => {
-        d.isChecked = false;
-      });
-    });
+    setCards([]);
+    fetchPokemons();
+    // setCards((draft) => {
+    //   draft.forEach((d) => {
+    //     d.isChecked = false;
+    //   });
+    // });
     setShowPopup(false);
     setIsWin(false);
   }
@@ -137,7 +147,7 @@ export default function Game() {
         <div>
           <p>Score: {score.current}</p>
           <p>Best Score: {bestScore}</p>
-          {isLoading && <h2>Gathering Pokemons...</h2>}
+          {newGame && <h2>Gathering Pokemons...</h2>}
           <div className={styles.cards}>
             {cards.map((item, index) => {
               //await timer(100);

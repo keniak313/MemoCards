@@ -7,7 +7,7 @@ import Popup from "./Popup";
 import styles from "../styles/game.module.css";
 
 export default function Game() {
-  const cardsAmount = 3;
+  const cardsAmount = 10;
   const [score, setScore] = useState(0);
   const [bestScore, setBestScore] = useState(score);
   const [isLoading, setIsLoading] = useState(false);

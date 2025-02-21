@@ -8,8 +8,9 @@ import styles from "../styles/game.module.css";
 
 export default function Game() {
   const cardsAmount = 10;
-  const [score, setScore] = useState(0);
-  const [bestScore, setBestScore] = useState(score);
+  let score = useRef(0);
+  // const [score, setScore] = useState(0);
+  const [bestScore, setBestScore] = useState(score.current);
   const [isLoading, setIsLoading] = useState(false);
 
   const [cards, setCards] = useImmer([]);
@@ -77,38 +78,30 @@ export default function Game() {
       //Game OVer
       popupHandler();
     } else {
-      //Next round
-      setCards((draft) => {
-        draft[index].isChecked = true;
-      });
-      nextRound();
+      score.current++;
+      if (score.current === cardsAmount) {
+        //Win
+        setIsWin(true);
+        popupHandler();
+      } else {
+        //Next round
+        setCards((draft) => {
+          draft[index].isChecked = true;
+        });
+      }
     }
+    setCards((draft) => {
+      shuffleArray(draft);
+    });
     refs[item.name].current.blur();
   }
 
-  function nextRound() {
-    setScore((score) => score + 1);
-    setCards((draft) => {
-      //draft.sort(() => 0.5 - Math.random());
-      shuffleArray(draft);
-    });
-  }
-
-  const popupHandler = useCallback(() => {
-    if (score > bestScore) {
-      setBestScore(score);
+  const popupHandler = () => {
+    if (score.current > bestScore) {
+      setBestScore(score.current);
     }
     setShowPopup(true);
-  }, [score, bestScore]);
-
-  const checkWin = useCallback(() => {
-    if (score === cardsAmount) {
-      setIsWin(true);
-      popupHandler();
-    }
-  }, [score, popupHandler]);
-
-  useEffect(() => checkWin(), [checkWin]);
+  };
 
   const shuffleArray = (array) => {
     for (let i = array.length - 1; i > 0; i--) {
@@ -120,8 +113,7 @@ export default function Game() {
   };
 
   function restartGame() {
-    nextRound();
-    setScore(0);
+    score.current = 0;
     setCards((draft) => {
       draft.forEach((d) => {
         d.isChecked = false;
@@ -137,13 +129,13 @@ export default function Game() {
     <section id={styles.game}>
       <Popup
         onClick={() => restartGame()}
-        score={score}
+        score={score.current}
         isVisible={showPopup}
         isWin={isWin}
       />
       <section id={styles.main}>
         <div>
-          <p>Score: {score}</p>
+          <p>Score: {score.current}</p>
           <p>Best Score: {bestScore}</p>
           {isLoading && <h2>Gathering Pokemons...</h2>}
           <div className={styles.cards}>

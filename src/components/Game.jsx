@@ -7,11 +7,10 @@ import Popup from "./Popup";
 import styles from "../styles/game.module.css";
 
 export default function Game() {
-  const cardsAmount = 10;
+  const [cardsAmount, setCardsAmount] = useState(10);
   let score = useRef(0);
   // const [score, setScore] = useState(0);
   const [bestScore, setBestScore] = useState(score.current);
-  const [isLoading, setIsLoading] = useState(false);
 
   const [cards, setCards] = useImmer([]);
   const [showPopup, setShowPopup] = useState(false);
@@ -20,8 +19,38 @@ export default function Game() {
 
   const refs = useRef({});
 
-  const fetchPokemons = useCallback(
-    async (data) => {
+  // const fetchPokemons = useCallback(
+  //   async (data) => {
+  //     console.log("FETCH pokemons");
+  //     console.log(data);
+  //     await data.results.forEach((p) => {
+  //       fetch(p.url)
+  //         .then((response) => response.json())
+  //         .then((pokemon) => {
+  //           const name = pokemon.name;
+  //           const img =
+  //             pokemon.sprites.versions[`generation-v`][`black-white`].animated
+  //               .front_default;
+  //           setCards((draft) => {
+  //             draft.push({
+  //               name: name,
+  //               image: img,
+  //               id: uuidv4(),
+  //               isChecked: false,
+  //             });
+  //           });
+  //         });
+  //     });
+  //     setNewGame(false);
+  //   },
+  //   [setCards]
+  // );
+
+  useEffect(() => {
+    console.log("FETCH pokemon URL");
+    let ignore = false;
+
+    async function fetchPokemons(data) {
       console.log("FETCH pokemons");
       console.log(data);
       await data.results.forEach((p) => {
@@ -43,14 +72,8 @@ export default function Game() {
           });
       });
       setNewGame(false);
-    },
-    [setCards]
-  );
+    }
 
-  useEffect(() => {
-    console.log("FETCH pokemon URL");
-    let ignore = false;
-    setIsLoading(true);
     async function fetchData() {
       try {
         const response = await fetch(
@@ -63,7 +86,6 @@ export default function Game() {
             const json = await response.json();
             console.log(json);
             await fetchPokemons(json);
-            setIsLoading(false);
           } else {
             throw new Error(response.status);
           }
@@ -78,7 +100,7 @@ export default function Game() {
     return () => {
       ignore = true;
     };
-  }, [fetchPokemons, newGame]);
+  }, [setCards, newGame, cardsAmount]);
 
   function gameHandler(item, index) {
     if (item.isChecked) {
@@ -86,7 +108,9 @@ export default function Game() {
       popupHandler();
     } else {
       score.current++;
-      if (score.current === cardsAmount) {
+      console.log(`Score: ${score.current} Cards: ${cardsAmount}`)
+      if (score.current === Number(cardsAmount)) {
+        console.log("Win?")
         //Win
         setIsWin(true);
         popupHandler();
@@ -123,18 +147,19 @@ export default function Game() {
     setNewGame(true);
     score.current = 0;
     setCards([]);
-    fetchPokemons();
-    // setCards((draft) => {
-    //   draft.forEach((d) => {
-    //     d.isChecked = false;
-    //   });
-    // });
     setShowPopup(false);
     setIsWin(false);
   }
 
   //const timer = (ms) => new Promise((res) => setTimeout(res, ms));
 
+  const inputRef = useRef(null);
+
+  function cardsAmountHandler(){
+    setCardsAmount(inputRef.current.value)
+    restartGame()
+  }
+  
   return (
     <section id={styles.game}>
       <Popup
@@ -144,26 +169,37 @@ export default function Game() {
         isWin={isWin}
       />
       <section id={styles.main}>
-        <div>
+        <div className={styles.title}>
+          <h1>POKE MEMO</h1>
+          <label htmlFor="cardsAmount">
+            <input type="number" name="cardsAmount" title="cardsAmount" placeholder="Cards amount:" ref={inputRef}></input>
+            <button onClick={() => cardsAmountHandler()}>
+              CONFIRM
+            </button>
+          </label>
+        </div>
+        <div className={styles.scores}>
           <p>Score: {score.current}</p>
           <p>Best Score: {bestScore}</p>
+        </div>
+        <div className={styles.loading}>
           {newGame && <h2>Gathering Pokemons...</h2>}
-          <div className={styles.cards}>
-            {cards.map((item, index) => {
-              //await timer(100);
-              const newRef = React.createRef();
-              refs[item.name] = newRef;
-              return (
-                <Card
-                  name={item.name}
-                  image={item.image}
-                  key={item.id}
-                  ref={newRef}
-                  onClick={() => gameHandler(item, index)}
-                />
-              );
-            })}
-          </div>
+        </div>
+        <div className={styles.cards}>
+          {cards.map((item, index) => {
+            //await timer(100);
+            const newRef = React.createRef();
+            refs[item.name] = newRef;
+            return (
+              <Card
+                name={item.name}
+                image={item.image}
+                key={item.id}
+                ref={newRef}
+                onClick={() => gameHandler(item, index)}
+              />
+            );
+          })}
         </div>
       </section>
     </section>

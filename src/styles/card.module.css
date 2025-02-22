@@ -3,9 +3,10 @@
   flex-direction: column;
   justify-content: end;
   align-items: center;
+  align-content: center;
   background-color: rgb(21, 21, 22);
+  height: 200px;
   width: 120px;
-  height: 160px;
   border-radius: 0.7rem;
   margin: 0;
   padding: 0.5rem;
